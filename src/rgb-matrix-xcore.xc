@@ -20,14 +20,14 @@
 /**
  * Wiring
  *
- * R1   {D14}    |    G1   {D15}
- * B1   {D16}    |    _
- * R2   {D17}    |    G2   {D18}
- * B2   {D19}    |    _
- * A    {D26}    |    B    {D27}
- * C    {D32}    |    D    {D33}
- * CLK  {D13}    |    LAT  {D23}
- * OE   {D22}    |    _
+ * R1   {D50}    |    G1   {D52}
+ * B1   {D53}    |    _
+ * R2   {D54}    |    G2   {D55}
+ * B2   {D56}    |    _
+ * A    {D64}    |    B    {D65}
+ * C    {D66}    |    D    {D67}
+ * CLK  {D10}    |    LAT  {D11}
+ * OE   {D00}    |    _
  *
  * Note: OE (Output Enable) appears to be active low.
  */
