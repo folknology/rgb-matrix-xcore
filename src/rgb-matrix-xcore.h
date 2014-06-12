@@ -10,7 +10,7 @@
 
 
 #define RESOLUTION_BITS 1
-#define WAIT_PERIOD 5
+#define WAIT_PERIOD 6
 #define USE_GAMMA 1
 #define PANEL_WIDTH 32
 #define PANEL_HEIGHT 32
@@ -23,7 +23,7 @@ typedef struct {
 } pixel_t;
 
 interface display {
-	void refresh();
+	[[guarded]] void refresh();
 	void setPixel(const uint8_t x, const uint8_t y, const pixel_t pixel);
   pixel_t getPixel(const uint8_t x, const uint8_t y);
 };

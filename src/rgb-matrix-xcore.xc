@@ -34,23 +34,24 @@
 
 /* Port mapping */
 
-/* Output port for [A, B, C, D] signals {D26, D27, D32, D33} */
- port ABCD_port = XS1_PORT_4E;
+/* Output port RGB Data & LINE address 32A7-10 {A,B.C,D} 32A1-6 {R1,G1,B1,R2,G2,B2} */
+ port LINE_port = XS1_PORT_32A;
 /* Clock (CLK) control port {D13}*/
- port CLK_port = XS1_PORT_1F;
+ port CLK_port = XS1_PORT_1C;
 /* Latch (LAT) control port {D23} */
- port LAT_port = XS1_PORT_1H;
+ port LAT_port = XS1_PORT_1D;
 /* Output Enable (OE) port {D22} */
- port OE_port = XS1_PORT_1G;
-/* status LED */
- port LED_port = XS1_PORT_1A;
-/* port for RGB data {D21}[X, X, B2, G2, R2, B1, G1, R1]{D14}*/
- port RGB_port = XS1_PORT_8B;
+ port OE_port = XS1_PORT_1A;
 
+ port Slider = XS1_PORT_8A;
+
+int disabled = 0;
 
 
 int main() {
 	interface display disp;
+	Slider :> void;
+
 	par {	
 		display_client(disp); 
 		[[distribute]]display_server(disp);
@@ -63,14 +64,14 @@ int main() {
 [[distributable]]
 void display_server(server interface display disp) {
 	pixel_t framebuffer[PANEL_WIDTH][PANEL_HEIGHT];
-	ABCD_port   <: 0;
+	LINE_port   <: 0;
 	CLK_port    <: 0;
 	LAT_port    <: 0;
 	OE_port     <: 1;
 	memset(framebuffer, 0, sizeof framebuffer);
 	while(1) {
 		select {
-			case disp.refresh():
+			case !disabled => disp.refresh():
 				refreshDisplay(framebuffer);
 				break;
 			case disp.setPixel(const uint8_t x, const uint8_t y, const pixel_t pixel):
@@ -147,16 +148,18 @@ void inline refreshDisplay(pixel_t framebuffer[PANEL_WIDTH][PANEL_HEIGHT]) {
 			LAT_port <: 1; // latch data in
 			LAT_port <: 0;
 		}
+		uint32_t M = 0xFFFFFFFF;
+		uint32_t CR = 0xE1F80 | (row << 13); //3x3 leds off, shift row to ABCD pins
 		for (uint8_t bit = 0; bit < RESOLUTION_BITS; bit++) { // at each bit level
 			uint8_t mask = (1 << bit);
 
 			for (uint8_t col = 0; col < 32; col++) { // clock in row of data at bit level
-				uint8_t output =  ((rowB[col].b & mask ) << 5) | ((rowB[col].g & mask ) << 4) | ((rowB[col].r & mask ) << 3) | ((rowA[col].b & mask ) << 2) | ((rowA[col].g & mask ) << 1) | ((rowA[col].r & mask ) << 0);
-				RGB_port <: output;
+				uint32_t output =  ((rowB[col].b & mask ) << 6) | ((rowB[col].g & mask ) << 5) | ((rowB[col].r & mask ) << 4) | ((rowA[col].b & mask ) << 3) | ((rowA[col].g & mask ) << 2) | ((rowA[col].r & mask ) << 1);
+				LINE_port <: (output | CR);
 				CLK_port <: 0;
 				CLK_port <: 1;
 			}
-			ABCD_port <: row; // send address
+			//LINE_port <: (row << 7); // send address
 			LAT_port <: 1; // latch data in
 			LAT_port <: 0;
 			OE_port <: 0; // deassert blanking signal
