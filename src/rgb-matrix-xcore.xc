@@ -12,8 +12,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <math.h>
-
+#include "mathuint.h"
+#include "mathf8_24.h"
 #include "gamma.h"
 #include "rgb-matrix-xcore.h"
 
@@ -88,11 +88,32 @@ void display_client(client interface display disp) {
 
 	/* The following demo code borrowed and adapted from github skywodd/RGB_Matrix_Arduino_AVR */
 
-	const float radius1  = 16.3, radius2  = 23.0, radius3  = 40.8, radius4  = 44.2,
-				centerx1 = 16.1, centerx2 = 11.6, centerx3 = 23.4, centerx4 =  4.1,
-				centery1 =  8.7, centery2 =  6.5, centery3 = 14.0, centery4 = -2.9;
-	float       angle1   =  0.0, angle2   =  0.0, angle3   =  0.0, angle4   =  0.0;
-	long        hueShift =  0;
+	const f8_24 radius1 = 0b00010000010011001100110011001100,
+							radius2 = 0b00010111000000000000000000000000,
+							radius3 = 0b00101000110011001100110011001100,
+							radius4 = 0b00101100001100110011001100110011,
+
+							centerx1 = 0b00100000001100110011001100110011,
+							centerx2 = 0b00010111001100110011001100110011,
+							centerx3 = 0b00101110110011001100110011001100,
+							centerx4 = 0b00001000001100110011001100110011,
+
+							centery1 = 0b00010001011001100110011001100110,
+							centery2 = 0b00001101000000000000000000000000,
+							centery3 = 0b00011100000000000000000000000000,
+							centery4 = 0b10000101110011001100110011001100,
+
+							deltaang = 0b00000000000011110101110000101000,
+							deltahue = 0b00000000001100110011001100110011;
+
+							
+
+		f8_24 angle1 = 0,
+					angle2 = 0,
+					angle3 = 0,
+					angle4 = 0;
+
+	long    hueShift =  0;
 
 	while (1) {
 		select {
@@ -101,14 +122,14 @@ void display_client(client interface display disp) {
 				uint8_t x, y;
 				long value;
 
-				sx1 = (int)(cos(angle1) * radius1 + centerx1);
-				sx2 = (int)(cos(angle2) * radius2 + centerx2);
-				sx3 = (int)(cos(angle3) * radius3 + centerx3);
-				sx4 = (int)(cos(angle4) * radius4 + centerx4);
-				y1  = (int)(sin(angle1) * radius1 + centery1);
-				y2  = (int)(sin(angle2) * radius2 + centery2);
-				y3  = (int)(sin(angle3) * radius3 + centery3);
-				y4  = (int)(sin(angle4) * radius4 + centery4);
+				sx1 = mulf8_24(cosf8_24(angle1) , radius1 + centerx1) >> MATHF8_24_BITS;
+				sx2 = mulf8_24(cosf8_24(angle2) , radius2 + centerx2) >> MATHF8_24_BITS;
+				sx3 = mulf8_24(cosf8_24(angle3) , radius3 + centerx3) >> MATHF8_24_BITS;
+				sx4 = mulf8_24(cosf8_24(angle4) , radius4 + centerx4) >> MATHF8_24_BITS;
+				y1  = mulf8_24(sinf8_24(angle1) , radius1 + centery1) >> MATHF8_24_BITS;
+				y2  = mulf8_24(sinf8_24(angle2) , radius2 + centery2) >> MATHF8_24_BITS;
+				y3  = mulf8_24(sinf8_24(angle3) , radius3 + centery3) >> MATHF8_24_BITS;
+				y4  = mulf8_24(sinf8_24(angle4) , radius4 + centery4) >> MATHF8_24_BITS;
 
 				for(y = 0; y < 32; y++) {
 					x1 = sx1; x2 = sx2; x3 = sx3; x4 = sx4;
@@ -129,9 +150,9 @@ void display_client(client interface display disp) {
 				disp.refresh();
 				//angle1 += 0.03;
 				//angle2 -= 0.07;
-				angle3 += 0.03;
+				angle3 += deltaang;
 				//angle4 -= 0.15;
-				hueShift += 0.1;
+				//hueShift += 0.1;
 				break;
 		}
 
